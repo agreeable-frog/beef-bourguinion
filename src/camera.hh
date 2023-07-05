@@ -3,6 +3,7 @@
 #include <array>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <vector>
 
 class AbstractCamera {
 protected:
@@ -25,6 +26,10 @@ public:
         return glm::lookAt(_position, _position + _forward, _up);
     }
     virtual glm::mat4 getProjectionMatrix() = 0;
+    void rotateHeading(float angle) {
+        _forward = glm::rotate(glm::mat4(1.0f), angle, _axis) * glm::vec4(_forward, 1.0f);
+        _up = glm::rotate(glm::mat4(1.0f), angle, _axis) * glm::vec4(_up, 1.0f);
+    }
 };
 
 class SimplePerspectiveCamera : public AbstractCamera {
@@ -74,4 +79,34 @@ public:
     glm::mat4 getProjectionMatrix() override {
         return glm::frustum(_left, _right, _bottom, _top, _nearClip, _farClip);
     }
+};
+
+class PanoramicCamera {
+public:
+    PanoramicCamera(glm::vec3 position, glm::vec3 axis, glm::vec3 forward, float fovy,
+                    int nSplit, float nearClip = 0.1f, float farClip = 30.0f);
+    int nSplit() const {
+        return _nSplit;
+    }
+    const std::vector<FrustumCamera>& topCameras() const {
+        return _topCameras;
+    }
+    const std::vector<FrustumCamera>& midCameras() const {
+        return _midCameras;
+    }
+    const std::vector<FrustumCamera>& botCameras() const {
+        return _botCameras;
+    }
+
+private:
+    glm::vec3 _position;
+    glm::vec3 _axis;
+    glm::vec3 _forward;
+    float _fovy;
+    int _nSplit;
+    float _nearClip;
+    float _farClip;
+    std::vector<FrustumCamera> _topCameras;
+    std::vector<FrustumCamera> _midCameras;
+    std::vector<FrustumCamera> _botCameras;
 };

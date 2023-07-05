@@ -48,7 +48,7 @@ public:
     std::array<int, 512> keystates = {0};
     std::array<int, 2> mouseMove = {0}; // x,y from upper-left
     std::array<int, 16> mouseButtonStates = {0};
-    Window(const std::string& name, uint width, uint height);
+    Window(const std::string& name, uint width, uint height, Window* parent = 0);
     size_t width() const {
         return _width;
     }
@@ -60,6 +60,11 @@ public:
     }
     operator GLFWwindow*() const {
         return _pWindow;
+    }
+    void resize(size_t width, size_t height) {
+        glfwSetWindowSize(*this, width, height);
+        _width = width;
+        _height = height;
     }
     ~Window() {
         glfwDestroyWindow(_pWindow);

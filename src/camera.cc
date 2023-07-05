@@ -28,7 +28,7 @@ void AbstractCamera::keyMove(const std::array<int, 512>& keystates, double delta
 }
 
 void AbstractCamera::mouseDrag(const std::array<int, 16>& mouseButtonStates,
-                                        const std::array<int, 2>& move, double deltaTime) {
+                               const std::array<int, 2>& move, double deltaTime) {
     float speed = -0.1f;
     if (mouseButtonStates[GLFW_MOUSE_BUTTON_1]) {
         _forward = glm::rotate(glm::mat4(1.0f), (float)(move[0] * deltaTime) * speed, _axis) *
@@ -48,21 +48,49 @@ void AbstractCamera::mouseDrag(const std::array<int, 16>& mouseButtonStates,
 FrustumCamera FrustumCamera::build(glm::vec3 position, glm::vec3 axis, glm::vec3 forward,
                                    float fovx, float fovy, float headingOffset, float pitchOffset,
                                    float nearClip, float farClip) {
-    float width = 2 * nearClip * std::tan(fovx/2);
-    float height = 2 * nearClip * std::tan(fovy/2);
-    float left = -width/2;
-    float right = width/2;
-    float top = height/2;
-    float bot = -height/2;
+    float width = 2 * nearClip * std::tan(fovx / 2);
+    float height = 2 * nearClip * std::tan(fovy / 2);
+    float left = -width / 2;
+    float right = width / 2;
+    float top = height / 2;
+    float bot = -height / 2;
     float yOffset = 0.0f;
     if (pitchOffset < 0)
-        yOffset = std::tan(pitchOffset + fovy/2) * nearClip - height/2;
+        yOffset = std::tan(pitchOffset + fovy / 2) * nearClip - height / 2;
     else
-        yOffset = std::tan(pitchOffset - fovy/2) * nearClip + height/2;
+        yOffset = std::tan(pitchOffset - fovy / 2) * nearClip + height / 2;
     float xOffset = 0.0f;
     if (headingOffset < 0)
-        xOffset = std::tan(headingOffset + fovx/2) * nearClip - width/2;
+        xOffset = std::tan(headingOffset + fovx / 2) * nearClip - width / 2;
     else
-        xOffset = std::tan(headingOffset - fovx/2) * nearClip + width/2;
-    return FrustumCamera(position, axis, forward, left - xOffset, right - xOffset, top + yOffset, bot + yOffset, nearClip, farClip);
+        xOffset = std::tan(headingOffset - fovx / 2) * nearClip + width / 2;
+    return FrustumCamera(position, axis, forward, left - xOffset, right - xOffset, top + yOffset,
+                         bot + yOffset, nearClip, farClip);
+}
+
+PanoramicCamera::PanoramicCamera(glm::vec3 position, glm::vec3 axis, glm::vec3 forward, float fovy,
+                                 int nSplit, float nearClip, float farClip)
+    : _position(position),
+      _axis(axis),
+      _forward(forward),
+      _fovy(fovy),
+      _nSplit(nSplit),
+      _nearClip(nearClip),
+      _farClip(farClip) {
+    for (int i = 0; i < _nSplit; i++) {
+        auto cam1 = FrustumCamera::build(_position, _axis, _forward, 2 * (float)M_PI / _nSplit,
+                                        _fovy / 3, 0.0f, 0.0f, _nearClip, _farClip);
+        cam1.rotateHeading((2 * M_PI * (_nSplit / 2 - i)) / (float)_nSplit);
+        _midCameras.push_back(cam1);
+
+        auto cam2 = FrustumCamera::build(_position, _axis, _forward, 2 * (float)M_PI / _nSplit,
+                                        _fovy / 3, 0.0f, _fovy/3, _nearClip, _farClip);
+        cam2.rotateHeading((2 * M_PI * (_nSplit / 2 - i)) / (float)_nSplit);
+        _topCameras.push_back(cam2);
+
+        auto cam3 = FrustumCamera::build(_position, _axis, _forward, 2 * (float)M_PI / _nSplit,
+                                        _fovy / 3, 0.0f, -_fovy/3, _nearClip, _farClip);
+        cam3.rotateHeading((2 * M_PI * (_nSplit / 2 - i)) / (float)_nSplit);
+        _botCameras.push_back(cam3);
+    }
 }

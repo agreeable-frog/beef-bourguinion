@@ -54,12 +54,14 @@ void Window::mouseButtonCallback(GLFWwindow* pWindow, int button, int action, in
     }
 }
 
-Window::Window(const std::string& name, uint width, uint height) : _width(width), _height(height) {
+Window::Window(const std::string& name, uint width, uint height, Window* parent) : _width(width), _height(height) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-    _pWindow = glfwCreateWindow(width, height, name.c_str(), 0, 0);
+    std::cout << "hello?\n";
+    _pWindow = glfwCreateWindow(width, height, name.c_str(), 0, parent ? parent->getHandle() : 0);
+    std::cout << "goodbye?\n";
     if (_pWindow == nullptr) {
         throw std::runtime_error("Failed to create GLFW window");
     }
