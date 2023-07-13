@@ -88,14 +88,8 @@ public:
     int nSplit() const {
         return _nSplit;
     }
-    const std::vector<FrustumCamera>& topCameras() const {
-        return _topCameras;
-    }
-    const std::vector<FrustumCamera>& midCameras() const {
-        return _midCameras;
-    }
-    const std::vector<FrustumCamera>& botCameras() const {
-        return _botCameras;
+    const std::vector<FrustumCamera>& internalCameras() const {
+        return _internalCameras;
     }
 
 private:
@@ -106,7 +100,5 @@ private:
     int _nSplit;
     float _nearClip;
     float _farClip;
-    std::vector<FrustumCamera> _topCameras;
-    std::vector<FrustumCamera> _midCameras;
-    std::vector<FrustumCamera> _botCameras;
+    std::vector<FrustumCamera> _internalCameras;
 };

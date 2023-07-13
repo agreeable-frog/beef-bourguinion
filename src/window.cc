@@ -54,14 +54,18 @@ void Window::mouseButtonCallback(GLFWwindow* pWindow, int button, int action, in
     }
 }
 
-Window::Window(const std::string& name, uint width, uint height, Window* parent) : _width(width), _height(height) {
+Window::Window(const std::string& name, uint width, uint height, Window* parent, bool visible)
+    : _width(width), _height(height) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-    std::cout << "hello?\n";
+    if (!visible) {
+        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+    } else {
+        glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
+    }
     _pWindow = glfwCreateWindow(width, height, name.c_str(), 0, parent ? parent->getHandle() : 0);
-    std::cout << "goodbye?\n";
     if (_pWindow == nullptr) {
         throw std::runtime_error("Failed to create GLFW window");
     }
@@ -75,4 +79,27 @@ Window::Window(const std::string& name, uint width, uint height, Window* parent)
     }
     glfwSwapInterval(1);
     Context::registerDebugCallbacks();
+}
+
+RenderWindow::RenderWindow(const std::string& name, uint width, uint height)
+    : Window(name, width, height, 0, false) {
+    glCreateRenderbuffers(1, &_renderBuffer);
+    glCreateRenderbuffers(1, &_depthBuffer);
+    glNamedRenderbufferStorage(_renderBuffer, GL_RGBA, _width, _height);
+    glNamedRenderbufferStorage(_depthBuffer, GL_DEPTH_COMPONENT, _width, _height);
+    glGenFramebuffers(1, &_fbo);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, _fbo);
+    glNamedFramebufferRenderbuffer(_fbo, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, _renderBuffer);
+    glNamedFramebufferRenderbuffer(_fbo, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, _depthBuffer);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
+}
+
+SubWindow::SubWindow(const std::string& name, uint width, uint height, RenderWindow* window)
+    : Window(name, width, height, window) {
+    glGenFramebuffers(1, &_fbo);
+    glBindFramebuffer(GL_READ_FRAMEBUFFER, _fbo);
+    glEnable(GL_RENDERBUFFER);
+    glBindRenderbuffer(GL_RENDERBUFFER, window->renderBuffer());
+    glNamedFramebufferRenderbuffer(_fbo , GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, window->renderBuffer());
 }

@@ -38,17 +38,19 @@ class Window {
 private:
     Context _context;
     GLFWwindow* _pWindow;
-    size_t _width;
-    size_t _height;
     static void keyCallback(GLFWwindow* pWindow, int key, int scancode, int action, int mods);
     static void mousePosCallback(GLFWwindow* pWindow, double xpos, double ypos);
     static void mouseButtonCallback(GLFWwindow* pWindow, int button, int action, int mods);
+
+protected:
+    size_t _width;
+    size_t _height;
 
 public:
     std::array<int, 512> keystates = {0};
     std::array<int, 2> mouseMove = {0}; // x,y from upper-left
     std::array<int, 16> mouseButtonStates = {0};
-    Window(const std::string& name, uint width, uint height, Window* parent = 0);
+    Window(const std::string& name, uint width, uint height, Window* parent = 0, bool visible = true);
     size_t width() const {
         return _width;
     }
@@ -69,4 +71,29 @@ public:
     ~Window() {
         glfwDestroyWindow(_pWindow);
     }
+};
+
+class RenderWindow : public Window {
+public:
+    RenderWindow(const std::string& name, uint width, uint height);
+    GLuint fbo() const {
+        return _fbo;
+    }
+    GLuint renderBuffer() const {
+        return _renderBuffer;
+    }
+private:
+    GLuint _renderBuffer;
+    GLuint _depthBuffer;
+    GLuint _fbo;
+};
+
+class SubWindow : public Window {
+public:
+    SubWindow(const std::string& name, uint width, uint height, RenderWindow* window);
+    GLuint fbo() const {
+        return _fbo;
+    }
+private:
+    GLuint _fbo;
 };

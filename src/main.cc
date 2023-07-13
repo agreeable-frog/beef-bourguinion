@@ -10,25 +10,22 @@
 
 #define FRAMERATE 25
 
-int main() {
-    auto mainWindow = Window("window", 1024, 576);
-    GLuint renderBuffer;
-    glCreateRenderbuffers(1, &renderBuffer);
-    glNamedRenderbufferStorage(renderBuffer, GL_RGBA, mainWindow.width(), mainWindow.height());
-    GLuint fboMain;
-    glGenFramebuffers(1, &fboMain);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fboMain);
-    glNamedFramebufferRenderbuffer(fboMain, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, renderBuffer);
+struct StreamInfo {
+    uint width;
+    uint height;
+    float hfov;
+    float vfov;
+};
+auto roiInfo = StreamInfo{960, 120, 2 * M_PI, M_PI_4};
 
-    /* auto window2 = Window("window2", 200, 200, &mainWindow);
-    GLuint fbo2;
-    glGenFramebuffers(1, &fbo2);
-    glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo2);
-    glEnable(GL_RENDERBUFFER);
-    glBindRenderbuffer(GL_RENDERBUFFER, renderBuffer);
-    GLint tmpwidth = 0;
-    glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &tmpwidth);
-    glNamedFramebufferRenderbuffer(fbo2, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, renderBuffer); */
+int main() {
+    PanoramicCamera panoCamera({0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f},
+                               roiInfo.vfov * 3, 13);
+
+    auto mainWindow =
+        RenderWindow("window", roiInfo.width,
+                     std::tan(roiInfo.vfov * 3 / 2) * roiInfo.height / std::tan(roiInfo.vfov / 2));
+    auto panoRoi = SubWindow("PANO", roiInfo.width, roiInfo.height, &mainWindow);
 
     glfwMakeContextCurrent(mainWindow);
 
@@ -58,18 +55,16 @@ int main() {
     scene.addMesh(m3);
     auto sphere1 = std::make_shared<Object>(m2, texRed, glm::vec3{0.0f, 0.0f, 4.0f});
     sphere1->setMoveFunction([](Object* o, double t) {
-        float x = std::cos(t / 10.0f) * 8.0f;
+        float x = std::cos(t / 5.0f) * 8.0f;
         float y = std::sin(t / 1.0f) * 5.0f;
-        float z = std::sin(t / 10.0f) * 8.0f;
+        float z = std::sin(t / 5.0f) * 8.0f;
         o->setPosition(glm::vec3{x, y, z});
     });
     scene.addObject(sphere1);
     scene.addObject(std::make_shared<Object>(m3, texDebug, glm::vec3{0.0f, 0.0f, 0.0f},
                                              glm::vec3{0.0f, M_PI_2, 0.0f}, 15.0f));
-    PanoramicCamera panoCamera({0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f},
-                               2.0 / 3.0 * M_PI, 13);
-    mainWindow.resize(13 * std::tan(M_PI / 13) / std::tan(M_PI / 9) * 200, 200 * 3);
-    glNamedRenderbufferStorage(renderBuffer, GL_RGBA, mainWindow.width(), mainWindow.height());
+
+    glfwMakeContextCurrent(mainWindow);
 
     glBindBuffer(GL_ARRAY_BUFFER, vb);
     glBufferData(GL_ARRAY_BUFFER, scene.getVertexBuffer().size() * sizeof(Vertex),
@@ -88,7 +83,7 @@ int main() {
 
     glBindVertexArray(0);
 
-    while (!glfwWindowShouldClose(mainWindow)) {
+    while (!glfwWindowShouldClose(mainWindow) && !glfwWindowShouldClose(panoRoi)) {
         static double lastFrameTime = glfwGetTime();
         double currentTime = glfwGetTime();
         double deltaTime = currentTime - lastFrameTime;
@@ -100,47 +95,15 @@ int main() {
         glfwMakeContextCurrent(mainWindow);
         glfwPollEvents();
         glUseProgram(programBasic.programId);
-        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mainWindow.fbo());
         glViewport(0, 0, mainWindow.width(), mainWindow.height());
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glBindVertexArray(vao);
         for (int i = 0; i < panoCamera.nSplit(); i++) {
-            glViewport((i / (float)panoCamera.nSplit()) * mainWindow.width(),
-                       mainWindow.height() * 2.0 / 3, mainWindow.width() / panoCamera.nSplit() + 1,
-                       mainWindow.height() / 3 + 1);
-            auto tmpCam = panoCamera.topCameras()[i];
-            glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(tmpCam.getProjectionMatrix()));
-            glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(tmpCam.getViewMatrix()));
-            for (const auto& obj : scene.getObjects()) {
-                glUniformMatrix4fv(2, 1, GL_FALSE, glm::value_ptr(obj->getModelMatrix()));
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, obj->getTexture()->getId());
-                glDrawElements(GL_TRIANGLES, obj->getMesh()->getIndexSize(), GL_UNSIGNED_INT,
-                               (void*)(obj->getMesh()->getIndexOffset() * sizeof(uint32_t)));
-                glBindTexture(GL_TEXTURE_2D, 0);
-            }
-        }
-        for (int i = 0; i < panoCamera.nSplit(); i++) {
-            glViewport((i / (float)panoCamera.nSplit()) * mainWindow.width(),
-                       mainWindow.height() / 3, mainWindow.width() / panoCamera.nSplit() + 1,
-                       mainWindow.height() / 3 + 1);
-            auto tmpCam = panoCamera.midCameras()[i];
-            glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(tmpCam.getProjectionMatrix()));
-            glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(tmpCam.getViewMatrix()));
-            for (const auto& obj : scene.getObjects()) {
-                glUniformMatrix4fv(2, 1, GL_FALSE, glm::value_ptr(obj->getModelMatrix()));
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, obj->getTexture()->getId());
-                glDrawElements(GL_TRIANGLES, obj->getMesh()->getIndexSize(), GL_UNSIGNED_INT,
-                               (void*)(obj->getMesh()->getIndexOffset() * sizeof(uint32_t)));
-                glBindTexture(GL_TEXTURE_2D, 0);
-            }
-        }
-        for (int i = 0; i < panoCamera.nSplit(); i++) {
             glViewport((i / (float)panoCamera.nSplit()) * mainWindow.width(), 0,
-                       mainWindow.width() / panoCamera.nSplit() + 1, mainWindow.height() / 3 + 1);
-            auto tmpCam = panoCamera.botCameras()[i];
+                       mainWindow.width() / panoCamera.nSplit() + 1, mainWindow.height());
+            auto tmpCam = panoCamera.internalCameras()[i];
             glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(tmpCam.getProjectionMatrix()));
             glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(tmpCam.getViewMatrix()));
             for (const auto& obj : scene.getObjects()) {
@@ -154,14 +117,26 @@ int main() {
         }
         glBindVertexArray(0);
 
-        /* glBindFramebuffer(GL_READ_FRAMEBUFFER, fboMain);
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, mainWindow.fbo());
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
         glViewport(0, 0, mainWindow.width(), mainWindow.height());
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glBlitFramebuffer(0, 0, mainWindow.width(), mainWindow.height(), 0, 0, mainWindow.width(),
-                          mainWindow.height(), GL_COLOR_BUFFER_BIT, GL_NEAREST); */
+                          mainWindow.height(), GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
         glfwSwapBuffers(mainWindow);
+
+        glfwMakeContextCurrent(panoRoi);
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, panoRoi.fbo());
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+        glViewport(0, 0, panoRoi.width(), panoRoi.height());
+        glBlitFramebuffer(mainWindow.width() / 2 - panoRoi.width() / 2,
+                          mainWindow.height() / 2 - panoRoi.height() / 2,
+                          mainWindow.width() / 2 - panoRoi.width() / 2 + panoRoi.width(),
+                          mainWindow.height() / 2 - panoRoi.height() / 2 + panoRoi.height(), 0, 0,
+                          panoRoi.width(), panoRoi.height(), GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        glfwPollEvents();
+        glfwSwapBuffers(panoRoi);
     }
     glDeleteBuffers(1, &vb);
     glDeleteBuffers(1, &ib);
