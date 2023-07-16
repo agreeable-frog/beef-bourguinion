@@ -91,6 +91,9 @@ public:
     const std::vector<FrustumCamera>& internalCameras() const {
         return _internalCameras;
     }
+    float vfov() const {
+        return _fovy;
+    }
 
 private:
     glm::vec3 _position;

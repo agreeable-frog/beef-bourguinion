@@ -15,17 +15,34 @@ struct StreamInfo {
     uint height;
     float hfov;
     float vfov;
+    float heading;
+    float pitch;
 };
-auto roiInfo = StreamInfo{960, 120, 2 * M_PI, M_PI_4};
+auto roiInfo = StreamInfo{960, 120, 2 * M_PI, M_PI_4, 0, 0};
+
+void moveROI(const std::array<int, 512>& keystates, double deltaTime) {
+    if (keystates[GLFW_KEY_LEFT]) {
+        roiInfo.heading += M_PI / 4 * deltaTime;
+    }
+    if (keystates[GLFW_KEY_RIGHT]) {
+        roiInfo.heading -= M_PI / 4 * deltaTime;
+    }
+    if (keystates[GLFW_KEY_UP]) {
+        roiInfo.pitch += M_PI / 4 * deltaTime;
+    }
+    if (keystates[GLFW_KEY_DOWN]) {
+        roiInfo.pitch -= M_PI / 4 * deltaTime;
+    }
+}
 
 int main() {
     PanoramicCamera panoCamera({0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f},
-                               roiInfo.vfov * 3, 13);
+                               15 * M_PI / 16, 27);
 
     auto mainWindow =
         RenderWindow("window", roiInfo.width,
-                     std::tan(roiInfo.vfov * 3 / 2) * roiInfo.height / std::tan(roiInfo.vfov / 2));
-    auto panoRoi = SubWindow("PANO", roiInfo.width, roiInfo.height, &mainWindow);
+                     std::tan(15 * M_PI / 16 / 2) * roiInfo.height / std::tan(roiInfo.vfov / 2));
+    auto roiWindow = SubWindow("PANO", roiInfo.width, roiInfo.height, &mainWindow);
 
     glfwMakeContextCurrent(mainWindow);
 
@@ -83,7 +100,7 @@ int main() {
 
     glBindVertexArray(0);
 
-    while (!glfwWindowShouldClose(mainWindow) && !glfwWindowShouldClose(panoRoi)) {
+    while (!glfwWindowShouldClose(mainWindow) && !glfwWindowShouldClose(roiWindow)) {
         static double lastFrameTime = glfwGetTime();
         double currentTime = glfwGetTime();
         double deltaTime = currentTime - lastFrameTime;
@@ -126,17 +143,21 @@ int main() {
 
         glfwSwapBuffers(mainWindow);
 
-        glfwMakeContextCurrent(panoRoi);
-        glBindFramebuffer(GL_READ_FRAMEBUFFER, panoRoi.fbo());
+        glfwMakeContextCurrent(roiWindow);
+        moveROI(roiWindow.keystates, deltaTime);
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, roiWindow.fbo());
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-        glViewport(0, 0, panoRoi.width(), panoRoi.height());
-        glBlitFramebuffer(mainWindow.width() / 2 - panoRoi.width() / 2,
-                          mainWindow.height() / 2 - panoRoi.height() / 2,
-                          mainWindow.width() / 2 - panoRoi.width() / 2 + panoRoi.width(),
-                          mainWindow.height() / 2 - panoRoi.height() / 2 + panoRoi.height(), 0, 0,
-                          panoRoi.width(), panoRoi.height(), GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        glViewport(0, 0, roiWindow.width(), roiWindow.height());
+        float posX = mainWindow.width() / 2 * roiInfo.heading / M_PI;
+        float posY = mainWindow.height() / 2 * std::tan(roiInfo.pitch) / std::tan(panoCamera.vfov() / 2);
+        float srcX0 = mainWindow.width() / 2 - roiWindow.width() / 2 - posX;
+        float srcY0 = mainWindow.height() / 2 - roiWindow.height() / 2 + posY;
+        float srcX1 = mainWindow.width() / 2 + roiWindow.width() / 2 - posX;
+        float srcY1 = mainWindow.height() / 2 + roiWindow.height() / 2 + posY;
+        glBlitFramebuffer(srcX0, srcY0, srcX1, srcY1, 0, 0, roiWindow.width(), roiWindow.height(),
+                          GL_COLOR_BUFFER_BIT, GL_NEAREST);
         glfwPollEvents();
-        glfwSwapBuffers(panoRoi);
+        glfwSwapBuffers(roiWindow);
     }
     glDeleteBuffers(1, &vb);
     glDeleteBuffers(1, &ib);
