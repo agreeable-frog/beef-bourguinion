@@ -27,11 +27,17 @@ void moveROI(const std::array<int, 512>& keystates, double deltaTime) {
     if (keystates[GLFW_KEY_RIGHT]) {
         roiInfo.heading -= M_PI / 4 * deltaTime;
     }
+    if (roiInfo.heading > M_PI) {
+        roiInfo.heading -= 2 * M_PI;
+    }
+    if (roiInfo.heading < -M_PI) {
+        roiInfo.heading += 2 * M_PI;
+    }
     if (keystates[GLFW_KEY_UP]) {
-        roiInfo.pitch += M_PI / 4 * deltaTime;
+        if (roiInfo.pitch < 3 * M_PI / 8) roiInfo.pitch += M_PI / 4 * deltaTime;
     }
     if (keystates[GLFW_KEY_DOWN]) {
-        roiInfo.pitch -= M_PI / 4 * deltaTime;
+        if (roiInfo.pitch > -3 * M_PI / 8) roiInfo.pitch -= M_PI / 4 * deltaTime;
     }
 }
 
@@ -108,6 +114,19 @@ int main() {
             continue;
         }
         lastFrameTime = currentTime;
+        // FPS counter
+        {
+            static int counter = 0;
+            static double timeRef = 0.0;
+            counter++;
+            timeRef += deltaTime;
+            if (timeRef > 5.0) {
+                double framerate = counter / timeRef;
+                std::cout << "FRAMERATE : " << framerate << " fps\n";
+                counter = 0;
+                timeRef = 0.0;
+            }
+        }
         scene.update(deltaTime);
         glfwMakeContextCurrent(mainWindow);
         glfwPollEvents();
@@ -149,13 +168,25 @@ int main() {
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
         glViewport(0, 0, roiWindow.width(), roiWindow.height());
         float posX = mainWindow.width() / 2 * roiInfo.heading / M_PI;
-        float posY = mainWindow.height() / 2 * std::tan(roiInfo.pitch) / std::tan(panoCamera.vfov() / 2);
+        float posY =
+            mainWindow.height() / 2 * std::tan(roiInfo.pitch) / std::tan(panoCamera.vfov() / 2);
         float srcX0 = mainWindow.width() / 2 - roiWindow.width() / 2 - posX;
         float srcY0 = mainWindow.height() / 2 - roiWindow.height() / 2 + posY;
         float srcX1 = mainWindow.width() / 2 + roiWindow.width() / 2 - posX;
         float srcY1 = mainWindow.height() / 2 + roiWindow.height() / 2 + posY;
         glBlitFramebuffer(srcX0, srcY0, srcX1, srcY1, 0, 0, roiWindow.width(), roiWindow.height(),
                           GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        if (srcX0 < 0) {
+            glBlitFramebuffer(mainWindow.width() + srcX0, srcY0, mainWindow.width(), srcY1, 0, 0,
+                              roiWindow.width() * (-(float)srcX0 / mainWindow.width()),
+                              roiWindow.height(), GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        }
+        if (srcX1 > (mainWindow.width() - 1)) {
+            glBlitFramebuffer(
+                0, srcY0, srcX1 - mainWindow.width(), srcY1,
+                roiWindow.width() * (1 - (srcX1 - mainWindow.width()) / mainWindow.width()), 0,
+                roiWindow.width(), roiWindow.height(), GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        }
         glfwPollEvents();
         glfwSwapBuffers(roiWindow);
     }
