@@ -14,7 +14,13 @@ find_package(Threads REQUIRED)
 include_directories(${OPENGL_INCLUDE_DIRS})
 include_directories(${GLEW_INCLUDE_DIRS})
 include_directories(${GLFW_INCLUDE_DIRS})
-include_directories(${CMAKE_SOURCE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/src/)
+include_directories(${CMAKE_SOURCE_DIR}/imgui/)
+
+file(GLOB_RECURSE IMGUI_FILES
+        "imgui/*.cpp"
+        "imgui/*.h"
+    )
 
 set(SOURCES
     src/main.cc
@@ -27,6 +33,7 @@ set(SOURCES
     src/lodepng.cc
     src/texture.cc
     src/light.cc
+    ${IMGUI_FILES}
 )
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/shaders/basic.vert ${CMAKE_CURRENT_BINARY_DIR}/shaders/basic.vert COPYONLY)
@@ -39,4 +46,5 @@ target_link_libraries(${PROJECT_NAME}
     ${GLEW_LIBRARIES}
     glfw
     Threads::Threads
+    ${CMAKE_DL_LIBS}
 )

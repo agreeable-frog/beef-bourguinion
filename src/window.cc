@@ -54,17 +54,13 @@ void Window::mouseButtonCallback(GLFWwindow* pWindow, int button, int action, in
     }
 }
 
-Window::Window(const std::string& name, uint width, uint height, Window* parent, bool visible)
+Window::Window(const std::string& name, uint width, uint height, Window* parent, bool visible, bool resizable)
     : _width(width), _height(height) {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-    if (!visible) {
-        glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-    } else {
-        glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
-    }
+    glfwWindowHint(GLFW_RESIZABLE, resizable ? GLFW_TRUE : GLFW_FALSE);
+    glfwWindowHint(GLFW_VISIBLE, visible ? GLFW_TRUE : GLFW_FALSE);
     _pWindow = glfwCreateWindow(width, height, name.c_str(), 0, parent ? parent->getHandle() : 0);
     if (_pWindow == nullptr) {
         throw std::runtime_error("Failed to create GLFW window");
@@ -95,11 +91,18 @@ RenderWindow::RenderWindow(const std::string& name, uint width, uint height)
     glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
 }
 
+void SubWindow::resizeCallback(GLFWwindow* pWindow, int width, int height) {
+    Window* windowInstance = static_cast<Window*>(glfwGetWindowUserPointer(pWindow));
+    windowInstance->sizeChanged(width, height);
+}
+
 SubWindow::SubWindow(const std::string& name, uint width, uint height, RenderWindow* window)
-    : Window(name, width, height, window) {
+    : Window(name, width, height, window, true, true) {
+    glfwSetWindowSizeCallback(_pWindow, &SubWindow::resizeCallback);
     glGenFramebuffers(1, &_fbo);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, _fbo);
     glEnable(GL_RENDERBUFFER);
     glBindRenderbuffer(GL_RENDERBUFFER, window->renderBuffer());
-    glNamedFramebufferRenderbuffer(_fbo , GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, window->renderBuffer());
+    glNamedFramebufferRenderbuffer(_fbo, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER,
+                                   window->renderBuffer());
 }

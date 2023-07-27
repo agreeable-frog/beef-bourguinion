@@ -36,13 +36,13 @@ private:
 
 class Window {
 private:
-    Context _context;
-    GLFWwindow* _pWindow;
     static void keyCallback(GLFWwindow* pWindow, int key, int scancode, int action, int mods);
     static void mousePosCallback(GLFWwindow* pWindow, double xpos, double ypos);
     static void mouseButtonCallback(GLFWwindow* pWindow, int button, int action, int mods);
+    Context _context;
 
 protected:
+    GLFWwindow* _pWindow;
     size_t _width;
     size_t _height;
 
@@ -50,7 +50,8 @@ public:
     std::array<int, 512> keystates = {0};
     std::array<int, 2> mouseMove = {0}; // x,y from upper-left
     std::array<int, 16> mouseButtonStates = {0};
-    Window(const std::string& name, uint width, uint height, Window* parent = 0, bool visible = true);
+    Window(const std::string& name, uint width, uint height, Window* parent = 0,
+           bool visible = true, bool resizable = false);
     size_t width() const {
         return _width;
     }
@@ -63,8 +64,7 @@ public:
     operator GLFWwindow*() const {
         return _pWindow;
     }
-    void resize(size_t width, size_t height) {
-        glfwSetWindowSize(*this, width, height);
+    void sizeChanged(size_t width, size_t height) {
         _width = width;
         _height = height;
     }
@@ -82,6 +82,7 @@ public:
     GLuint renderBuffer() const {
         return _renderBuffer;
     }
+
 private:
     GLuint _renderBuffer;
     GLuint _depthBuffer;
@@ -94,6 +95,8 @@ public:
     GLuint fbo() const {
         return _fbo;
     }
+
 private:
+    static void resizeCallback(GLFWwindow* pWindow, int width, int height);
     GLuint _fbo;
 };

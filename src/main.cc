@@ -3,12 +3,14 @@
 #include "camera.hh"
 #include "window.hh"
 #include "scene.hh"
+#include "lodepng.hh"
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
-
-#define FRAMERATE 25
 
 struct StreamInfo {
     uint width;
@@ -18,37 +20,27 @@ struct StreamInfo {
     float heading;
     float pitch;
 };
-auto roiInfo = StreamInfo{960, 120, 2 * M_PI, M_PI_4, 0, 0};
-
-void moveROI(const std::array<int, 512>& keystates, double deltaTime) {
-    if (keystates[GLFW_KEY_LEFT]) {
-        roiInfo.heading += M_PI / 4 * deltaTime;
-    }
-    if (keystates[GLFW_KEY_RIGHT]) {
-        roiInfo.heading -= M_PI / 4 * deltaTime;
-    }
-    if (roiInfo.heading > M_PI) {
-        roiInfo.heading -= 2 * M_PI;
-    }
-    if (roiInfo.heading < -M_PI) {
-        roiInfo.heading += 2 * M_PI;
-    }
-    if (keystates[GLFW_KEY_UP]) {
-        if (roiInfo.pitch < 3 * M_PI / 8) roiInfo.pitch += M_PI / 4 * deltaTime;
-    }
-    if (keystates[GLFW_KEY_DOWN]) {
-        if (roiInfo.pitch > -3 * M_PI / 8) roiInfo.pitch -= M_PI / 4 * deltaTime;
-    }
-}
 
 int main() {
-    PanoramicCamera panoCamera({0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f},
-                               15 * M_PI / 16, 27);
+    float framerate = 25.0f;
+    float panoVfov = 3 * M_PI / 4;
+    uint N = 13;
+    float quality = 1.0f;
 
-    auto mainWindow =
-        RenderWindow("window", roiInfo.width,
-                     std::tan(15 * M_PI / 16 / 2) * roiInfo.height / std::tan(roiInfo.vfov / 2));
-    auto roiWindow = SubWindow("PANO", roiInfo.width, roiInfo.height, &mainWindow);
+    PanoramicCamera panoCamera({0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, panoVfov,
+                               N);
+    auto mainWindow = RenderWindow(
+        "window", 2000 * quality, 2000 * quality / N * std::tan(panoVfov / 2) / std::tan(M_PI / N));
+
+    auto roiInfo = StreamInfo{900, 600, 0.9f, 0.6f, 0, 0};
+    auto roiWindow = SubWindow("ROI", roiInfo.width, roiInfo.height, &mainWindow);
+
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+
+    ImGui_ImplGlfw_InitForOpenGL(roiWindow, true);
+    ImGui_ImplOpenGL3_Init();
 
     glfwMakeContextCurrent(mainWindow);
 
@@ -110,7 +102,7 @@ int main() {
         static double lastFrameTime = glfwGetTime();
         double currentTime = glfwGetTime();
         double deltaTime = currentTime - lastFrameTime;
-        if (deltaTime < (1.0 / FRAMERATE)) {
+        if (deltaTime < (1.0 / framerate)) {
             continue;
         }
         lastFrameTime = currentTime;
@@ -129,7 +121,6 @@ int main() {
         }
         scene.update(deltaTime);
         glfwMakeContextCurrent(mainWindow);
-        glfwPollEvents();
         glUseProgram(programBasic.programId);
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mainWindow.fbo());
         glViewport(0, 0, mainWindow.width(), mainWindow.height());
@@ -163,35 +154,56 @@ int main() {
         glfwSwapBuffers(mainWindow);
 
         glfwMakeContextCurrent(roiWindow);
-        moveROI(roiWindow.keystates, deltaTime);
+
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        ImGui::SliderFloat("HFOV", &roiInfo.hfov, 0.0f, 2 * M_PI);
+        ImGui::SliderFloat("VFOV", &roiInfo.vfov, 0.0f, M_PI / 2);
+        ImGui::SliderFloat("heading", &roiInfo.heading, -M_PI, M_PI);
+        ImGui::SliderFloat("pitch", &roiInfo.pitch, -M_PI/2, M_PI/2);
+
         glBindFramebuffer(GL_READ_FRAMEBUFFER, roiWindow.fbo());
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
         glViewport(0, 0, roiWindow.width(), roiWindow.height());
+        float roiWidth = roiInfo.hfov / (2 * M_PI) * mainWindow.width();
+        float roiHeight = std::tan(roiInfo.vfov / 2) / std::tan(panoVfov / 2) * mainWindow.height();
         float posX = mainWindow.width() / 2 * roiInfo.heading / M_PI;
-        float posY =
-            mainWindow.height() / 2 * std::tan(roiInfo.pitch) / std::tan(panoCamera.vfov() / 2);
-        float srcX0 = mainWindow.width() / 2 - roiWindow.width() / 2 - posX;
-        float srcY0 = mainWindow.height() / 2 - roiWindow.height() / 2 + posY;
-        float srcX1 = mainWindow.width() / 2 + roiWindow.width() / 2 - posX;
-        float srcY1 = mainWindow.height() / 2 + roiWindow.height() / 2 + posY;
+        float posY = mainWindow.height() / 2 * std::tan(roiInfo.pitch) / std::tan(panoVfov / 2);
+        float srcX0 = mainWindow.width() / 2 - roiWidth / 2 - posX;
+        float srcY0 = mainWindow.height() / 2 - roiHeight / 2 + posY;
+        float srcX1 = mainWindow.width() / 2 + roiWidth / 2 - posX;
+        float srcY1 = mainWindow.height() / 2 + roiHeight / 2 + posY;
         glBlitFramebuffer(srcX0, srcY0, srcX1, srcY1, 0, 0, roiWindow.width(), roiWindow.height(),
                           GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        // the area spills on the left
         if (srcX0 < 0) {
             glBlitFramebuffer(mainWindow.width() + srcX0, srcY0, mainWindow.width(), srcY1, 0, 0,
-                              roiWindow.width() * (-(float)srcX0 / mainWindow.width()),
-                              roiWindow.height(), GL_COLOR_BUFFER_BIT, GL_NEAREST);
+                              roiWindow.width() * (-srcX0 / roiWidth) + 1, roiWindow.height(),
+                              GL_COLOR_BUFFER_BIT, GL_NEAREST);
         }
+        // the area spills on the right
         if (srcX1 > (mainWindow.width() - 1)) {
             glBlitFramebuffer(
                 0, srcY0, srcX1 - mainWindow.width(), srcY1,
-                roiWindow.width() * (1 - (srcX1 - mainWindow.width()) / mainWindow.width()), 0,
-                roiWindow.width(), roiWindow.height(), GL_COLOR_BUFFER_BIT, GL_NEAREST);
+                roiWindow.width() - roiWindow.width() * (srcX1 - mainWindow.width()) / roiWidth - 1,
+                0, roiWindow.width(), roiWindow.height(), GL_COLOR_BUFFER_BIT, GL_NEAREST);
         }
-        glfwPollEvents();
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
         glfwSwapBuffers(roiWindow);
+
+        glfwPollEvents();
     }
     glDeleteBuffers(1, &vb);
     glDeleteBuffers(1, &ib);
     glDeleteVertexArrays(1, &vao);
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
     return 0;
 }
