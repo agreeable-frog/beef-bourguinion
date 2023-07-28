@@ -25,12 +25,13 @@ int main() {
     float framerate = 25.0f;
     float panoVfov = 3 * M_PI / 4;
     uint N = 13;
-    float quality = 1.0f;
+    int qualityActual = 0;
+    int quality = 0;
 
     PanoramicCamera panoCamera({0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f, 1.0f}, panoVfov,
                                N);
     auto mainWindow = RenderWindow(
-        "window", 2000 * quality, 2000 * quality / N * std::tan(panoVfov / 2) / std::tan(M_PI / N));
+        "window", 2000 * std::pow(2.0f, quality), 2000 * std::pow(2.0f, quality) / N * std::tan(panoVfov / 2) / std::tan(M_PI / N));
 
     auto roiInfo = StreamInfo{900, 600, 0.9f, 0.6f, 0, 0};
     auto roiWindow = SubWindow("ROI", roiInfo.width, roiInfo.height, &mainWindow);
@@ -160,12 +161,19 @@ int main() {
         ImGui::NewFrame();
         ImGui::SliderFloat("HFOV", &roiInfo.hfov, 0.0f, 2 * M_PI);
         ImGui::SliderFloat("VFOV", &roiInfo.vfov, 0.0f, M_PI / 2);
-        ImGui::SliderFloat("heading", &roiInfo.heading, -M_PI, M_PI);
-        ImGui::SliderFloat("pitch", &roiInfo.pitch, -M_PI/2, M_PI/2);
+        ImGui::SliderFloat("Heading", &roiInfo.heading, -M_PI, M_PI);
+        float pitchLimit = panoCamera.vfov() / 2 - roiInfo.vfov / 2;
+        if (roiInfo.pitch > pitchLimit) roiInfo.pitch = pitchLimit;
+        if (roiInfo.pitch < -pitchLimit) roiInfo.pitch = -pitchLimit;
+        ImGui::SliderFloat("Pitch", &roiInfo.pitch, -pitchLimit, pitchLimit);
         ImGui::SliderInt("Subdivisions", (int*)&N, 7, 53);
+        ImGui::SliderInt("Quality", &quality, -2, 2);
         N = N % 2 == 0 ? N + 1 : N;
-        if (N != panoCamera.nSplit()) {
+        if (N != panoCamera.nSplit() || (quality != qualityActual)) {
             panoCamera.changeNSplit(N);
+            qualityActual = quality;
+            mainWindow.resize(2000 * std::pow(2.0f, quality),
+                              2000 * std::pow(2.0f, quality) / N * std::tan(panoVfov / 2) / std::tan(M_PI / N));
         }
 
         glBindFramebuffer(GL_READ_FRAMEBUFFER, roiWindow.fbo());

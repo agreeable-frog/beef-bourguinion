@@ -82,6 +82,7 @@ public:
     GLuint renderBuffer() const {
         return _renderBuffer;
     }
+    void resize(uint width, uint height);
 
 private:
     GLuint _renderBuffer;

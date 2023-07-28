@@ -106,3 +106,10 @@ SubWindow::SubWindow(const std::string& name, uint width, uint height, RenderWin
     glNamedFramebufferRenderbuffer(_fbo, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER,
                                    window->renderBuffer());
 }
+
+void RenderWindow::resize(uint width, uint height) {
+    glfwSetWindowSize(_pWindow, width, height);
+    sizeChanged(width, height);
+    glNamedRenderbufferStorage(_renderBuffer, GL_RGBA, _width, _height);
+    glNamedRenderbufferStorage(_depthBuffer, GL_DEPTH_COMPONENT, _width, _height);
+}
