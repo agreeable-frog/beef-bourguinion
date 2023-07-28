@@ -94,6 +94,7 @@ public:
     float vfov() const {
         return _fovy;
     }
+    void changeNSplit(uint N);
 
 private:
     glm::vec3 _position;

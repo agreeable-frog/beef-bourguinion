@@ -79,7 +79,18 @@ PanoramicCamera::PanoramicCamera(glm::vec3 position, glm::vec3 axis, glm::vec3 f
       _farClip(farClip) {
     for (int i = 0; i < _nSplit; i++) {
         auto cam1 = FrustumCamera::build(_position, _axis, _forward, 2 * (float)M_PI / _nSplit,
-                                        _fovy, 0.0f, 0.0f, _nearClip, _farClip);
+                                         _fovy, 0.0f, 0.0f, _nearClip, _farClip);
+        cam1.rotateHeading((2 * M_PI * (_nSplit / 2 - i)) / (float)_nSplit);
+        _internalCameras.push_back(cam1);
+    }
+}
+
+void PanoramicCamera::changeNSplit(uint N) {
+    _internalCameras.clear();
+    _nSplit = N;
+    for (int i = 0; i < _nSplit; i++) {
+        auto cam1 = FrustumCamera::build(_position, _axis, _forward, 2 * (float)M_PI / _nSplit,
+                                         _fovy, 0.0f, 0.0f, _nearClip, _farClip);
         cam1.rotateHeading((2 * M_PI * (_nSplit / 2 - i)) / (float)_nSplit);
         _internalCameras.push_back(cam1);
     }

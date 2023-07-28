@@ -162,6 +162,11 @@ int main() {
         ImGui::SliderFloat("VFOV", &roiInfo.vfov, 0.0f, M_PI / 2);
         ImGui::SliderFloat("heading", &roiInfo.heading, -M_PI, M_PI);
         ImGui::SliderFloat("pitch", &roiInfo.pitch, -M_PI/2, M_PI/2);
+        ImGui::SliderInt("Subdivisions", (int*)&N, 7, 53);
+        N = N % 2 == 0 ? N + 1 : N;
+        if (N != panoCamera.nSplit()) {
+            panoCamera.changeNSplit(N);
+        }
 
         glBindFramebuffer(GL_READ_FRAMEBUFFER, roiWindow.fbo());
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
