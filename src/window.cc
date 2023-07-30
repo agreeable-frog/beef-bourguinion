@@ -73,7 +73,7 @@ Window::Window(const std::string& name, uint width, uint height, Window* parent,
     if (glewInit() != GLEW_OK) {
         throw std::runtime_error("GLEW init failed.");
     }
-    glfwSwapInterval(1);
+    glfwSwapInterval(0);
     Context::registerDebugCallbacks();
 }
 
