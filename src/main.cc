@@ -53,12 +53,14 @@ int main() {
     std::shared_ptr<Mesh> m1 = std::make_shared<CubeMesh>();
     std::shared_ptr<Mesh> m2 = std::make_shared<SphereMesh>(128, 128);
     std::shared_ptr<Mesh> m3 = std::make_shared<SkySphereMesh>(128, 128);
-    std::shared_ptr<Texture> texDebug =
-        std::make_shared<Texture>("../resources/debug.png", 1, true);
+    std::shared_ptr<Mesh> m4 = std::make_shared<PlaneMesh>(glm::vec3{0.0f, 1.0f, 0.0f}, glm::vec3{0.0f, 0.0f, 1.0f}, 1.0f);
+    std::shared_ptr<Texture> texDebugSky = std::make_shared<Texture>("../resources/debug.png", -1);
+    std::shared_ptr<Texture> texDebug = std::make_shared<Texture>("../resources/debug.png");
     std::shared_ptr<Texture> texRed = std::make_shared<UniformTexture>(glm::vec3{1.0f, 0.0f, 0.0f});
     scene.addMesh(m1);
     scene.addMesh(m2);
     scene.addMesh(m3);
+    scene.addMesh(m4);
     auto sphere1 = std::make_shared<Object>(m2, texRed, glm::vec3{0.0f, 0.0f, 4.0f});
     sphere1->setMoveFunction([](Object* o, double t) {
         float x = std::cos(t / 5.0f) * 8.0f;
@@ -66,16 +68,12 @@ int main() {
         float z = std::sin(t / 5.0f) * 8.0f;
         o->setPosition(glm::vec3{x, y, z});
     });
-    auto sphere2 = std::make_shared<Object>(m2, texRed, glm::vec3{0.0f, 0.0f, 4.0f});
-    sphere2->setMoveFunction([](Object* o, double t) {
-        float x = std::cos(t / 5.0f) * 8.0f;
-        float y = 0;
-        float z = std::sin(t / 5.0f) * 8.0f;
-        o->setPosition(glm::vec3{x, y, z});
-    });
     scene.addObject(sphere1);
-    scene.addObject(sphere2);
-    scene.addObject(std::make_shared<Object>(m3, texDebug, glm::vec3{0.0f, 0.0f, 0.0f},
+    auto cube = std::make_shared<Object>(m1, texDebug, glm::vec3{0.0f, 0.0f, 5.0f});
+    scene.addObject(cube);
+    auto ground = std::make_shared<Object>(m4, texDebug, glm::vec3{0.0f, -4.0f, 0.0f}, glm::vec3{-M_PI_2, 0.0f, M_PI}, 10.0f);
+    scene.addObject(ground);
+    scene.addObject(std::make_shared<Object>(m3, texDebugSky, glm::vec3{0.0f, 0.0f, 0.0f},
                                              glm::vec3{0.0f, M_PI_2, 0.0f}, 15.0f));
 
     auto programBasic = Program("shaders/basic.vert", "shaders/basic.frag");
@@ -121,8 +119,6 @@ int main() {
     glBindVertexArray(vao2);
 
     glBindBuffer(GL_ARRAY_BUFFER, vb);
-    glBufferData(GL_ARRAY_BUFFER, scene.getVertexBuffer().size() * sizeof(Vertex),
-                 scene.getVertexBuffer().data(), GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex),
@@ -132,12 +128,11 @@ int main() {
     glEnableVertexAttribArray(2);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ib);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, scene.getIndexBuffer().size() * sizeof(uint32_t),
-                 scene.getIndexBuffer().data(), GL_STATIC_DRAW);
 
     glBindVertexArray(0);
 
-    while (!glfwWindowShouldClose(mainWindow) && !glfwWindowShouldClose(roiWindow) && !glfwWindowShouldClose(fpsWindow)) {
+    while (!glfwWindowShouldClose(mainWindow) && !glfwWindowShouldClose(roiWindow) &&
+           !glfwWindowShouldClose(fpsWindow)) {
         static double lastFrameTime = glfwGetTime();
         double currentTime = glfwGetTime();
         double deltaTime = currentTime - lastFrameTime;

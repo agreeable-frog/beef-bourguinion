@@ -12,7 +12,7 @@ typedef unsigned char uchar;
 class Texture {
 public:
     Texture() = default;
-    Texture(const std::string& file, int rot = 0, bool mirrorY = false);
+    Texture(const std::string& file, int rot = 0);
     ~Texture() {
         glDeleteTextures(1, &_id);
     }

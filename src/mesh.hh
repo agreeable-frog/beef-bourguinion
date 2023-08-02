@@ -44,3 +44,8 @@ class SkySphereMesh : public Mesh {
 public:
     SkySphereMesh(int nRings, int nSegments);
 };
+
+class PlaneMesh : public Mesh {
+public:
+    PlaneMesh(glm::vec3 up, glm::vec3 dir, float ratio);
+};

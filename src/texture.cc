@@ -12,13 +12,23 @@ static std::vector<unsigned char> loadImage(const std::string& path, uint& width
     return data;
 }
 
-Texture::Texture(const std::string& file, int rot, bool mirrorY) {
+Texture::Texture(const std::string& file, int rot) {
     glGenTextures(1, &_id);
     glBindTexture(GL_TEXTURE_2D, _id);
     glTextureParameteri(_id, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTextureParameteri(_id, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 
     _data = loadImage(file, _width, _height);
+    for (size_t i = 0; i < _height / 2; i++) {
+        for (size_t j = 0; j < _width; j++) {
+            for (size_t t = 0; t < 3; t++) {
+                auto tmp = _data[j * 3 + t + i * _width * 3];
+                _data[j * 3 + t + i * _width * 3] =
+                    _data[j * 3 + t + (_height - 1 - i) * _width * 3];
+                _data[j * 3 + t + (_height - 1 - i) * _width * 3] = tmp;
+            }
+        }
+    }
     if (_width == _height) {
         if (rot == -1) {
             std::vector<uchar> copy = std::vector<uchar>(_data);
@@ -39,18 +49,6 @@ Texture::Texture(const std::string& file, int rot, bool mirrorY) {
                         _data[j * 3 + t + i * _width * 3] =
                             copy[(_width - 1 - i) * 3 + t + j * _width * 3];
                     }
-                }
-            }
-        }
-    }
-    if (mirrorY) {
-        for (size_t i = 0; i < _height / 2; i++) {
-            for (size_t j = 0; j < _width; j++) {
-                for (size_t t = 0; t < 3; t++) {
-                    auto tmp = _data[j * 3 + t + i * _width * 3];
-                    _data[j * 3 + t + i * _width * 3] =
-                        _data[j * 3 + t + (_height - 1 - i) * _width * 3];
-                    _data[j * 3 + t + (_height - 1 - i) * _width * 3] = tmp;
                 }
             }
         }

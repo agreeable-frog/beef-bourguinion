@@ -16,45 +16,45 @@ void Mesh::registerInBuffer(std::vector<Vertex>& vertexBuffer, std::vector<uint3
 }
 
 CubeMesh::CubeMesh() : Mesh() {
-    _vertices.push_back(Vertex{{-1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}});
+    _vertices.push_back(Vertex{{-1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}});
     _vertices.push_back(Vertex{{-1.0f, -1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}});
-    _vertices.push_back(Vertex{{1.0f, -1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}});
-    _vertices.push_back(Vertex{{1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}});
+    _vertices.push_back(Vertex{{1.0f, -1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}});
+    _vertices.push_back(Vertex{{1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}});
     std::vector<uint32_t> indexFace1 = {0, 1, 3, 1, 2, 3};
     _indices.insert(_indices.end(), indexFace1.begin(), indexFace1.end());
 
-    _vertices.push_back(Vertex{{-1.0f, -1.0f, 1.0f}, {0.0f, -1.0f, 0.0f}, {0.0f, 0.0f}});
+    _vertices.push_back(Vertex{{-1.0f, -1.0f, 1.0f}, {0.0f, -1.0f, 0.0f}, {0.0f, 1.0f}});
     _vertices.push_back(Vertex{{-1.0f, -1.0f, -1.0f}, {0.0f, -1.0f, 0.0f}, {0.0f, 0.0f}});
-    _vertices.push_back(Vertex{{1.0f, -1.0f, -1.0f}, {0.0f, -1.0f, 0.0f}, {0.0f, 0.0f}});
-    _vertices.push_back(Vertex{{1.0f, -1.0f, 1.0f}, {0.0f, -1.0f, 0.0f}, {0.0f, 0.0f}});
+    _vertices.push_back(Vertex{{1.0f, -1.0f, -1.0f}, {0.0f, -1.0f, 0.0f}, {1.0f, 0.0f}});
+    _vertices.push_back(Vertex{{1.0f, -1.0f, 1.0f}, {0.0f, -1.0f, 0.0f}, {1.0f, 1.0f}});
     std::vector<uint32_t> indexFace2 = {4, 5, 7, 5, 6, 7};
     _indices.insert(_indices.end(), indexFace2.begin(), indexFace2.end());
 
-    _vertices.push_back(Vertex{{-1.0f, -1.0f, -1.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f}});
-    _vertices.push_back(Vertex{{-1.0f, 1.0f, -1.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f}});
-    _vertices.push_back(Vertex{{1.0f, 1.0f, -1.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f}});
+    _vertices.push_back(Vertex{{-1.0f, -1.0f, -1.0f}, {0.0f, 0.0f, -1.0f}, {1.0f, 0.0f}});
+    _vertices.push_back(Vertex{{-1.0f, 1.0f, -1.0f}, {0.0f, 0.0f, -1.0f}, {1.0f, 1.0f}});
+    _vertices.push_back(Vertex{{1.0f, 1.0f, -1.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 1.0f}});
     _vertices.push_back(Vertex{{1.0f, -1.0f, -1.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f}});
     std::vector<uint32_t> indexFace3 = {8, 9, 11, 9, 10, 11};
     _indices.insert(_indices.end(), indexFace3.begin(), indexFace3.end());
 
-    _vertices.push_back(Vertex{{-1.0f, 1.0f, -1.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}});
+    _vertices.push_back(Vertex{{-1.0f, 1.0f, -1.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}});
     _vertices.push_back(Vertex{{-1.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}});
-    _vertices.push_back(Vertex{{1.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}});
-    _vertices.push_back(Vertex{{1.0f, 1.0f, -1.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}});
+    _vertices.push_back(Vertex{{1.0f, 1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}});
+    _vertices.push_back(Vertex{{1.0f, 1.0f, -1.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f}});
     std::vector<uint32_t> indexFace4 = {12, 13, 15, 13, 14, 15};
     _indices.insert(_indices.end(), indexFace4.begin(), indexFace4.end());
 
-    _vertices.push_back(Vertex{{1.0f, 1.0f, 1.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}});
+    _vertices.push_back(Vertex{{1.0f, 1.0f, 1.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}});
     _vertices.push_back(Vertex{{1.0f, -1.0f, 1.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}});
-    _vertices.push_back(Vertex{{1.0f, -1.0f, -1.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}});
-    _vertices.push_back(Vertex{{1.0f, 1.0f, -1.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}});
+    _vertices.push_back(Vertex{{1.0f, -1.0f, -1.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}});
+    _vertices.push_back(Vertex{{1.0f, 1.0f, -1.0f}, {1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}});
     std::vector<uint32_t> indexFace5 = {16, 17, 19, 17, 18, 19};
     _indices.insert(_indices.end(), indexFace5.begin(), indexFace5.end());
 
-    _vertices.push_back(Vertex{{-1.0f, 1.0f, -1.0f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}});
+    _vertices.push_back(Vertex{{-1.0f, 1.0f, -1.0f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 1.0f}});
     _vertices.push_back(Vertex{{-1.0f, -1.0f, -1.0f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}});
-    _vertices.push_back(Vertex{{-1.0f, -1.0f, 1.0f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}});
-    _vertices.push_back(Vertex{{-1.0f, 1.0f, 1.0f}, {-1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}});
+    _vertices.push_back(Vertex{{-1.0f, -1.0f, 1.0f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}});
+    _vertices.push_back(Vertex{{-1.0f, 1.0f, 1.0f}, {-1.0f, 0.0f, 0.0f}, {1.0f, 1.0f}});
     std::vector<uint32_t> indexFace6 = {20, 21, 23, 21, 22, 23};
     _indices.insert(_indices.end(), indexFace6.begin(), indexFace6.end());
 }
@@ -131,4 +131,16 @@ SkySphereMesh::SkySphereMesh(int nRings, int nSegments) : Mesh() {
             _indices.push_back(k);
         }
     }
+}
+
+PlaneMesh::PlaneMesh(glm::vec3 up, glm::vec3 dir, float ratio) {
+    up = glm::normalize(up);
+    dir = glm::normalize(dir - glm::dot(dir, up) / glm::length(up) * up); // Gram–Schmidt
+    glm::vec3 dir2 = glm::cross(up, dir);
+    _vertices.push_back(Vertex{glm::vec3{-dir + dir2}, up, {0.0f, 0.0f}});
+    _vertices.push_back(Vertex{glm::vec3{-dir - dir2}, up, {1.0f, 0.0f}});
+    _vertices.push_back(Vertex{glm::vec3{dir - dir2}, up, {1.0f, 1.0f}});
+    _vertices.push_back(Vertex{glm::vec3{dir + dir2}, up, {0.0f, 1.0f}});
+    std::vector<uint32_t> index = {0, 1, 2, 0, 2, 3};
+    _indices.insert(_indices.end(), index.begin(), index.end());
 }
