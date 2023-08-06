@@ -5,7 +5,9 @@
 * GLFW
 * GLEW
 * GLM
-* ImGui
+* [ImGui](https://github.com/ocornut/imgui)
+* [Lodepng](https://github.com/lvandeve/lodepng)
+* [OBJ_loader](https://github.com/Bly7/OBJ-Loader/)
 
 ### Features
 

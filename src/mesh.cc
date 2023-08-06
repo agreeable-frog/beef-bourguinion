@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <iostream>
 
+#include "OBJ_Loader.hh"
+
 void Mesh::registerInBuffer(std::vector<Vertex>& vertexBuffer, std::vector<uint32_t>& indexBuffer) {
     _indexOffset = indexBuffer.size();
     auto vertexBufferSize = vertexBuffer.size();
@@ -133,7 +135,7 @@ SkySphereMesh::SkySphereMesh(int nRings, int nSegments) : Mesh() {
     }
 }
 
-PlaneMesh::PlaneMesh(glm::vec3 up, glm::vec3 dir, float ratio) {
+PlaneMesh::PlaneMesh(glm::vec3 up, glm::vec3 dir, float ratio) : Mesh() {
     up = glm::normalize(up);
     dir = glm::normalize(dir - glm::dot(dir, up) / glm::length(up) * up); // Gram–Schmidt
     glm::vec3 dir2 = glm::cross(up, dir);
@@ -143,4 +145,21 @@ PlaneMesh::PlaneMesh(glm::vec3 up, glm::vec3 dir, float ratio) {
     _vertices.push_back(Vertex{glm::vec3{dir + dir2}, up, {0.0f, 1.0f}});
     std::vector<uint32_t> index = {0, 1, 2, 0, 2, 3};
     _indices.insert(_indices.end(), index.begin(), index.end());
+}
+
+Mesh Mesh::loadFromOBJ(const std::string& path) {
+    Mesh mesh;
+    objl::Loader loader;
+    loader.LoadFile(path);
+    for (const auto& vertex : loader.LoadedMeshes[0].Vertices) {
+        mesh._vertices.push_back(
+            Vertex{glm::vec3{vertex.Position.X, vertex.Position.Y, vertex.Position.Z},
+                   glm::vec3{vertex.Normal.X, vertex.Normal.Y, vertex.Normal.Z},
+                   glm::vec2{vertex.TextureCoordinate.X, vertex.TextureCoordinate.Y}});
+    }
+
+    mesh._indices = loader.LoadedMeshes[0].Indices;
+    std::cout << "indices size : " << mesh._indices.size() << '\n';
+
+    return mesh;
 }

@@ -54,6 +54,7 @@ int main() {
     std::shared_ptr<Mesh> m2 = std::make_shared<SphereMesh>(128, 128);
     std::shared_ptr<Mesh> m3 = std::make_shared<SkySphereMesh>(128, 128);
     std::shared_ptr<Mesh> m4 = std::make_shared<PlaneMesh>(glm::vec3{0.0f, 1.0f, 0.0f}, glm::vec3{0.0f, 0.0f, 1.0f}, 1.0f);
+    std::shared_ptr<Mesh> alligatorMesh = std::make_shared<Mesh>(Mesh::loadFromOBJ("../resources/stanford-bunny.obj"));
     std::shared_ptr<Texture> texDebugSky = std::make_shared<Texture>("../resources/debug.png", -1);
     std::shared_ptr<Texture> texDebug = std::make_shared<Texture>("../resources/debug.png");
     std::shared_ptr<Texture> texRed = std::make_shared<UniformTexture>(glm::vec3{1.0f, 0.0f, 0.0f});
@@ -61,21 +62,10 @@ int main() {
     scene.addMesh(m2);
     scene.addMesh(m3);
     scene.addMesh(m4);
-    auto sphere1 = std::make_shared<Object>(m2, texRed, glm::vec3{0.0f, 0.0f, 4.0f});
-    sphere1->setMoveFunction([](Object* o, double t) {
-        float x = std::cos(t / 5.0f) * 8.0f;
-        float y = std::sin(t / 1.0f) * 5.0f;
-        float z = std::sin(t / 5.0f) * 8.0f;
-        o->setPosition(glm::vec3{x, y, z});
-    });
-    scene.addObject(sphere1);
-    auto cube = std::make_shared<Object>(m1, texDebug, glm::vec3{0.0f, 0.0f, 5.0f});
-    scene.addObject(cube);
-    auto ground = std::make_shared<Object>(m4, texDebug, glm::vec3{0.0f, -4.0f, 0.0f}, glm::vec3{-M_PI_2, 0.0f, M_PI}, 10.0f);
-    scene.addObject(ground);
+    scene.addMesh(alligatorMesh);
     scene.addObject(std::make_shared<Object>(m3, texDebugSky, glm::vec3{0.0f, 0.0f, 0.0f},
                                              glm::vec3{0.0f, M_PI_2, 0.0f}, 15.0f));
-
+    scene.addObject(std::make_shared<Object>(alligatorMesh, texDebug, glm::vec3{0.0f, 0.0f, 0.0f}, glm::vec3{0.0f, 0.0f, 0.0f}, 1.0f));
     auto programBasic = Program("shaders/basic.vert", "shaders/basic.frag");
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glClearColor(0.1, 0.1, 0.1, 0.0);

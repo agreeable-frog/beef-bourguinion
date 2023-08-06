@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 #include <vector>
+#include <string>
 
 struct Vertex {
     glm::vec3 pos;
@@ -28,6 +29,7 @@ public:
         return _indices.size();
     }
     void registerInBuffer(std::vector<Vertex>& vertexBuffer, std::vector<uint32_t>& indexBuffer);
+    static Mesh loadFromOBJ(const std::string& path);
 };
 
 class CubeMesh : public Mesh {
